@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todomanager/photo_list_screen.dart';
+import 'package:todomanager/todo_list_screen.dart';
 
 class SignInScreen extends StatelessWidget {
   SignInScreen({super.key});
@@ -19,7 +19,7 @@ class SignInScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Photo App',
+                  'TODO管理アプリ',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 SizedBox(height: 16),
@@ -92,7 +92,7 @@ class SignInScreen extends StatelessWidget {
     // 画像一覧画面に切り替え
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => PhotoListScreen(),
+        builder: (_) => TodoListScreen(),
       ),
     );
   }
