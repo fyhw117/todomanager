@@ -38,16 +38,12 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
         onPageChanged: (int index) => _onPageChanged(index),
         children: [
           //「全ての画像」を表示する部分
-          Container(
-            child: Center(
+          Center(
               child: Text('ページ：フォト'),
-            ),
           ),
           //「お気に入り登録した画像」を表示する部分
-          Container(
-            child: Center(
+          Center(
               child: Text('ページ：お気に入り'),
-            ),
           ),
         ],
       ),
@@ -105,5 +101,11 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
