@@ -34,10 +34,13 @@ class SignInScreen extends StatelessWidget {
                     if (value?.isEmpty == true) {
                       // 問題があるときはメッセージを返す
                       return 'メールアドレスを入力して下さい';
-                    }
+                    }else if(!(value! == "0117")){
+                      return '正しいメールアドレスを入力して下さい';
+                    }else{
                     // 問題ないときはnullを返す
                     return null;
-                  },
+                    }
+                  }
                 ),
                 SizedBox(height: 8),
                 TextFormField(
@@ -52,6 +55,8 @@ class SignInScreen extends StatelessWidget {
                     if (value?.isEmpty == true) {
                       // 問題があるときはメッセージを返す
                       return 'パスワードを入力して下さい';
+                    }else if(!(value! == '0117')){
+                      return '正しいパスワードを入力して下さい';
                     }
                     // 問題ないときはnullを返す
                     return null;
@@ -70,8 +75,21 @@ class SignInScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    // 新規登録ボタンをタップしたときの処理
-                    onPressed: () => _onSignIn(context),
+                    // 新規登録ボタンをタップしたときの処理（未実装の旨を表示）
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: const Text('エラー'),
+                          content: const Text('新規登録機能は未実装です'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(c),
+                              child: const Text('OK')),
+                          ],
+                        ),
+                      );
+                    },
                     child: Text('新規登録'),
                   ),
                 ),
