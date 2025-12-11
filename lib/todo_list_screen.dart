@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:todomanager/sign_in_screen.dart';
 
+
 class Todo {
   String title;
   DateTime? due;
+  bool start;
   bool done;
-  Todo({required this.title, this.due, this.done = false});
+  Todo({required this.title, this.due, this.start = false, this.done = false});
 }
 
 class TodoListScreen extends StatefulWidget {
@@ -117,6 +119,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
               return DataRow(
                 cells: [
                   DataCell(Checkbox(
+                    value: todo.start,
+                    onChanged: (v) => _toggleStart(index, v ?? false),
+                  )),
+                  DataCell(Checkbox(
                     value: todo.done,
                     onChanged: (v) => _toggleDone(index, v ?? false),
                   )),
@@ -124,15 +130,13 @@ class _TodoListScreenState extends State<TodoListScreen> {
                   DataCell(Text(todo.due != null
                       ? '${todo.due!.year}/${todo.due!.month}/${todo.due!.day}'
                       : '-')),
-                  DataCell(Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _deleteTodo(index),
-                        tooltip: '削除',
-                      ),
-                    ],
-                  )),
+                  DataCell(
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteTodo(index),
+                      tooltip: '削除',
+                    ),
+                  ),
                 ],
               );
             },
@@ -140,6 +144,12 @@ class _TodoListScreenState extends State<TodoListScreen> {
         ),
       ),
     );
+  }
+
+  void _toggleStart(int index, bool value) {
+    setState(() {
+      _todos[index].start = value;
+    });
   }
 
   void _toggleDone(int index, bool value) {
