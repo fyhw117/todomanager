@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todomanager/todo_list_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class SignInScreen extends StatelessWidget {
   SignInScreen({super.key});
@@ -22,9 +24,9 @@ class SignInScreen extends StatelessWidget {
                   'TODO管理アプリ',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'メールアドレス',
                   ),
                   keyboardType: TextInputType.emailAddress,
@@ -42,9 +44,9 @@ class SignInScreen extends StatelessWidget {
                     }
                   }
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'パスワード',
                   ),
                   keyboardType: TextInputType.visiblePassword,
@@ -62,16 +64,16 @@ class SignInScreen extends StatelessWidget {
                     return null;
                   },
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     // ログインボタンをタップしたときの処理
                     onPressed: () => _onSignIn(context),
-                    child: Text('ログイン'),
+                    child: const Text('ログイン'),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -90,7 +92,7 @@ class SignInScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Text('新規登録'),
+                    child: const Text('新規登録'),
                   ),
                 ),
               ],
@@ -103,16 +105,21 @@ class SignInScreen extends StatelessWidget {
 
   void _onSignIn(BuildContext context) {
     // 入力内容を確認する
-    if (_formKey.currentState?.validate() != true) {
-    return;
-    }
+    if (_formKey.currentState?.validate() != true) return;
+    _formKey.currentState?.save();
 
-    // 画像一覧画面に切り替え
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => TodoListScreen(),
-      ),
-    );
+    final userId = 'user_123'; 
+
+    _saveUserId(userId).then((_) {
+      if (!context.mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => TodoListScreen(userId: userId)),
+      );
+    });
   }
-
+  
+  Future<void> _saveUserId(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', userId);
+  }
 }
