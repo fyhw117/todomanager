@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todomanager/sign_in_screen.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Todo {
   String title;
@@ -10,7 +12,8 @@ class Todo {
 }
 
 class TodoListScreen extends StatefulWidget {
-  const TodoListScreen({super.key});
+  final String userId;  // ← ユーザーID を受け取る
+  const TodoListScreen({super.key, required this.userId});
   @override
   State<TodoListScreen> createState() => _TodoListScreenState();
 }
@@ -28,10 +31,49 @@ class _TodoListScreenState extends State<TodoListScreen> {
     // PageViewの表示を切り替えるのに使う
     _controller = PageController(initialPage: _currentIndex);
     // サンプルデータ
-    _todos.addAll([
-      Todo(title: '買い物', due: DateTime.now().add(Duration(days: 1))),
-      Todo(title: 'コードレビュー', due: DateTime.now().add(Duration(days: 2))),
-    ]);
+    _loadTodos();  // ← ユーザーごとのデータを読み込む
+  }
+
+    Future<void> _loadTodos() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'todos_${widget.userId}';  // ← ユーザーID をキーに含める
+    final s = prefs.getString(key);
+    if (s != null && s.isNotEmpty) {
+      try {
+        final List list = jsonDecode(s);
+        setState(() {
+          _todos.clear();
+          _todos.addAll(list.map((m) => Todo(
+                title: m['title'] ?? '',
+                due: m['due'] != null ? DateTime.parse(m['due']) : null,
+                start: m['start'] ?? false,
+                done: m['done'] ?? false,
+              )));
+        });
+      } catch (e) {
+        debugPrint('データ読み込みエラー: $e'); 
+      }
+    } else {
+      // サンプルデータ（初回のみ）
+      setState(() {
+        _todos.addAll([
+          Todo(title: 'サンプル１', due: DateTime.now().add(const Duration(days: 1))),
+          Todo(title: 'サンプル２', due: DateTime.now().add(const Duration(days: 2))),
+        ]);
+      });
+    }
+  }
+
+  Future<void> _saveTodos() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'todos_${widget.userId}';  // ← ユーザーID をキーに含める
+    final list = _todos.map((t) => {
+          'title': t.title,
+          'due': t.due?.toIso8601String(),
+          'start': t.start,
+          'done': t.done,
+        }).toList();
+    await prefs.setString(key, jsonEncode(list));
   }
 
   @override
@@ -147,20 +189,23 @@ class _TodoListScreenState extends State<TodoListScreen> {
 
   void _toggleStart(int index, bool value) {
     setState(() {
-      _todos[index].done = value;
+      _todos[index].start = value;
     });
+    _saveTodos();
   }
 
   void _toggleDone(int index, bool value) {
     setState(() {
       _todos[index].done = value;
     });
+    _saveTodos();
   }
 
   void _deleteTodo(int index) {
     setState(() {
       _todos.removeAt(index);
     });
+    _saveTodos();
   }
 
   Future<void> _showAddTodoDialog() async {
@@ -221,6 +266,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                       setState(() {
                         _todos.add(Todo(title: title, due: pickedDate));
                       });
+                      _saveTodos();
                     }
                     Navigator.of(context).pop();
                   },
@@ -231,6 +277,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
         );
       },
     );
+    titleCtrl.dispose();
   }
 
   void _onPageChanged(int index) {
