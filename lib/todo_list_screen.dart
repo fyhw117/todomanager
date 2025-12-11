@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todomanager/sign_in_screen.dart';
 
-
 class Todo {
   String title;
   DateTime? due;
@@ -148,7 +147,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
 
   void _toggleStart(int index, bool value) {
     setState(() {
-      _todos[index].start = value;
+      _todos[index].done = value;
     });
   }
 
