@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todomanager/sign_in_screen.dart';
 
 class Todo {
   String title;
@@ -40,8 +41,15 @@ class _TodoListScreenState extends State<TodoListScreen> {
         actions: [
           // ログアウト用ボタン
           IconButton(
-            onPressed: () => {},
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => SignInScreen(),
+                ),
+              );
+            },
             icon: Icon(Icons.exit_to_app),
+            tooltip: 'サインアウト',
           ),
         ],
       ),
@@ -96,6 +104,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
         scrollDirection: Axis.horizontal,
         child: DataTable(
           columns: const [
+            DataColumn(label: Text('実施')),
             DataColumn(label: Text('完了')),
             DataColumn(label: Text('タイトル')),
             DataColumn(label: Text('期限')),
