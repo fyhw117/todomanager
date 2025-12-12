@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todomanager/sign_in_screen.dart';
+import 'package:todomanager/todo_list_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,8 +15,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // アプリ起動時にログイン画面を表示
-      home: SignInScreen(),
+      // アプリ起動時にTODO画面を表示
+      home: const TodoListScreen(),
     );
   }
 }
