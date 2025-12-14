@@ -122,15 +122,17 @@ class _TodoListScreenState extends State<TodoListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: Text('TODO管理アプリ'),
+        backgroundColor: const Color.fromARGB(148, 91, 196, 49),
+        title: Text('TODO Manager'),
       ),
       body: PageView(
         controller: _controller,
         // 表示が切り替わったとき
         onPageChanged: (int index) => _onPageChanged(index),
         children: [
-          // TODO表を表示するページ
+          // todo表を表示するページ
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: _buildTodoTable(),
@@ -149,8 +151,11 @@ class _TodoListScreenState extends State<TodoListScreen> {
       ),
       // 追加ボタン
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color.fromARGB(255, 45, 100, 23),
         onPressed: _currentIndex == 2 ? _showAddRoutineDialog : _showAddTodoDialog,
-        child: const Icon(Icons.add),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,),
       ),
       // 画面下部のボタン部分
       bottomNavigationBar: BottomNavigationBar(
@@ -158,6 +163,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
         //   0: 一覧
         //   1: 完了済
         //   2: ルーティン
+        backgroundColor: const Color.fromARGB(148, 91, 196, 49),
         onTap: (int index) => _onTapBottomNavigationItem(index),
         // 現在表示されているBottomNavigationBarItemの番号
         //   0: 一覧
@@ -167,11 +173,11 @@ class _TodoListScreenState extends State<TodoListScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
-            label: '一覧',
+            label: 'TODO一覧',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle),
-            label: '完了済',
+            label: '完了済タスク',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.repeat),
@@ -198,13 +204,29 @@ class _TodoListScreenState extends State<TodoListScreen> {
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: DataTable(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DataTable(
+            headingRowColor: WidgetStateProperty.all(Colors.blue.shade50),
+            headingRowHeight: 48,
+            dataRowMinHeight: 56,
+            dataRowMaxHeight: 56,
+            columnSpacing: 24,
+            horizontalMargin: 16,
+            dividerThickness: 1,
+            border: TableBorder(
+              verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+              horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
           columns: const [
-            DataColumn(label: Text('実施')),
-            DataColumn(label: Text('完了')),
-            DataColumn(label: Text('タイトル')),
-            DataColumn(label: Text('期限')),
-            DataColumn(label: Text('操作')),
+            DataColumn(label: Text('実施', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('完了', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('タイトル', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('期限', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('操作', style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: List<DataRow>.generate(
             activeTodos.length,
@@ -249,6 +271,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
               );
             },
           ),
+          ),
         ),
       ),
     );
@@ -268,12 +291,28 @@ class _TodoListScreenState extends State<TodoListScreen> {
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: DataTable(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DataTable(
+            headingRowColor: WidgetStateProperty.all(Colors.green.shade50),
+            headingRowHeight: 48,
+            dataRowMinHeight: 56,
+            dataRowMaxHeight: 56,
+            columnSpacing: 24,
+            horizontalMargin: 16,
+            dividerThickness: 1,
+            border: TableBorder(
+              verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+              horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
           columns: const [
-            DataColumn(label: Text('タイトル')),
-            DataColumn(label: Text('期限')),
-            DataColumn(label: Text('完了日')),
-            DataColumn(label: Text('操作')),
+            DataColumn(label: Text('タイトル', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('期限', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('完了日', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('操作', style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: List<DataRow>.generate(
             completedTodos.length,
@@ -312,6 +351,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 ],
               );
             },
+          ),
           ),
         ),
       ),
@@ -361,14 +401,30 @@ class _TodoListScreenState extends State<TodoListScreen> {
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: DataTable(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DataTable(
+            headingRowColor: WidgetStateProperty.all(Colors.purple.shade50),
+            headingRowHeight: 48,
+            dataRowMinHeight: 56,
+            dataRowMaxHeight: 56,
+            columnSpacing: 24,
+            horizontalMargin: 16,
+            dividerThickness: 1,
+            border: TableBorder(
+              verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+              horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
           columns: const [
-            DataColumn(label: Text('タイトル')),
-            DataColumn(label: Text('頻度')),
-            DataColumn(label: Text('時間帯')),
-            DataColumn(label: Text('曜日')),
-            DataColumn(label: Text('開始日')),
-            DataColumn(label: Text('操作')),
+            DataColumn(label: Text('タイトル', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('頻度', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('時間帯', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('曜日', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('開始日', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('操作', style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: List<DataRow>.generate(
             _routines.length,
@@ -413,6 +469,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 ],
               );
             },
+          ),
           ),
         ),
       ),
