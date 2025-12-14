@@ -130,7 +130,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
         // 表示が切り替わったとき
         onPageChanged: (int index) => _onPageChanged(index),
         children: [
-          // TODO表を表示するページ
+          // todo表を表示するページ
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: _buildTodoTable(),
