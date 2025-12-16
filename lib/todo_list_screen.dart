@@ -21,6 +21,7 @@ class Routine {
   String timeSlot;
   DateTime startDate;
   String memo;
+  int? weekOfMonth; // 第何週か (1-5, null=未指定)
   Routine({
     required this.title,
     this.executionDate,
@@ -29,6 +30,7 @@ class Routine {
     required this.timeSlot,
     required this.startDate,
     this.memo = '',
+    this.weekOfMonth,
   });
 }
 
@@ -43,8 +45,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
   late PageController _controller;
   final List<Todo> _todos = [];
   final List<Routine> _routines = [];
+  final Map<String, String> _routineDoneMap = {}; // title -> ISO date of last done
   static const _prefsKey = 'todos_local_user';
   static const _routinesPrefsKey = 'routines_local_user';
+  static const _routineDonePrefsKey = 'routine_done_local_user';
 
   @override
   void initState() {
@@ -56,6 +60,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
     // サンプルデータ
     _loadTodos();
     _loadRoutines();
+    _loadRoutineDone();
   }
 
     Future<void> _loadTodos() async {
@@ -137,15 +142,20 @@ class _TodoListScreenState extends State<TodoListScreen> {
             padding: const EdgeInsets.all(8.0),
             child: _buildTodoTable(),
           ),
-          // 完了済タスク一覧ページ
+          // 今日のルーティン実施ページ
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: _buildCompletedTodoTable(),
+            child: _buildTodayRoutineList(),
           ),
           // ルーティン一覧ページ
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: _buildRoutineTable(),
+          ),
+          // 完了済タスク一覧ページ
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: _buildCompletedTodoTable(),
           ),
         ],
       ),
@@ -163,6 +173,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
         //   0: 一覧
         //   1: 完了済
         //   2: ルーティン
+        type: BottomNavigationBarType.fixed,
         backgroundColor: const Color.fromARGB(148, 91, 196, 49),
         onTap: (int index) => _onTapBottomNavigationItem(index),
         // 現在表示されているBottomNavigationBarItemの番号
@@ -176,12 +187,16 @@ class _TodoListScreenState extends State<TodoListScreen> {
             label: 'TODO一覧',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle),
-            label: '完了済タスク',
+            icon: Icon(Icons.today),
+            label: '今日のルーティン',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.repeat),
-            label: 'ルーティン',
+            label: 'ルーティン編集',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle),
+            label: '完了済タスク',
           ),
         ],
       ),
@@ -374,6 +389,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 timeSlot: m['timeSlot'] ?? '指定なし',
                 startDate: DateTime.parse(m['startDate'] ?? DateTime.now().toIso8601String()),
                 memo: m['memo'] ?? '',
+                weekOfMonth: m['weekOfMonth'],
               )));
         });
       } catch (e) {
@@ -392,8 +408,29 @@ class _TodoListScreenState extends State<TodoListScreen> {
           'timeSlot': r.timeSlot,
           'startDate': r.startDate.toIso8601String(),
           'memo': r.memo,
+          'weekOfMonth': r.weekOfMonth,
         }).toList();
     await prefs.setString(_routinesPrefsKey, jsonEncode(list));
+  }
+
+  Future<void> _loadRoutineDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    final s = prefs.getString(_routineDonePrefsKey);
+    if (s == null || s.isEmpty) return;
+    try {
+      final Map<String, dynamic> map = jsonDecode(s);
+      setState(() {
+        _routineDoneMap.clear();
+        _routineDoneMap.addAll(map.map((k, v) => MapEntry(k, v.toString())));
+      });
+    } catch (e) {
+      debugPrint('ルーティン実施状況読み込みエラー: $e');
+    }
+  }
+
+  Future<void> _saveRoutineDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_routineDonePrefsKey, jsonEncode(_routineDoneMap));
   }
 
   Widget _buildRoutineTable() {
@@ -476,11 +513,48 @@ class _TodoListScreenState extends State<TodoListScreen> {
     );
   }
 
+  Widget _buildTodayRoutineList() {
+    final today = _dateOnly(DateTime.now());
+    final routinesToday = _routines.where((r) => _routineShouldRunToday(r, today)).toList();
+
+    if (routinesToday.isEmpty) {
+      return const Center(child: Text('今日実施のルーティンはありません'));
+    }
+
+    return ListView.separated(
+      itemCount: routinesToday.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final r = routinesToday[index];
+        final done = _isRoutineDoneToday(r.title, today);
+        return ListTile(
+          leading: Checkbox(
+            value: done,
+            onChanged: (v) => _toggleRoutineDone(r.title, v ?? false, today),
+          ),
+          title: Text(r.title),
+          subtitle: Text(r.timeSlot == '指定なし' ? '時間帯: 未設定' : '時間帯: ${r.timeSlot}'),
+          trailing: IconButton(
+            icon: Icon(
+              r.memo.isEmpty ? Icons.note_add : Icons.note,
+              color: r.memo.isEmpty ? null : Colors.blue,
+            ),
+            onPressed: () => _showRoutineMemoDialog(_routines.indexOf(r)),
+            tooltip: 'メモ',
+          ),
+        );
+      },
+    );
+  }
+
   void _deleteRoutine(int index) {
+    final removedTitle = _routines[index].title;
     setState(() {
       _routines.removeAt(index);
+      _routineDoneMap.remove(removedTitle);
     });
     _saveRoutines();
+    _saveRoutineDone();
   }
 
   Future<void> _showRoutineMemoDialog(int index) async {
@@ -531,10 +605,14 @@ class _TodoListScreenState extends State<TodoListScreen> {
   Future<void> _showRoutineDialog(int? index) async {
     final isEdit = index != null;
     final titleCtrl = TextEditingController(text: isEdit ? _routines[index].title : '');
-    String frequency = isEdit ? _routines[index].frequency : '毎日';
+    const frequencyOptions = ['毎日', '毎月'];
+    String frequency = isEdit && frequencyOptions.contains(_routines[index].frequency)
+        ? _routines[index].frequency
+        : '毎日';
     String timeSlot = isEdit ? _routines[index].timeSlot : '指定なし';
     List<int> selectedWeekdays = isEdit ? List.from(_routines[index].weekdays) : [];
     DateTime startDate = isEdit ? _routines[index].startDate : DateTime.now();
+    int? weekOfMonth = isEdit ? _routines[index].weekOfMonth : null;
 
     await showDialog(
       context: context,
@@ -555,7 +633,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                     DropdownButtonFormField<String>(
                       value: frequency,
                       decoration: const InputDecoration(labelText: '頻度'),
-                      items: ['毎日', '毎週', '毎月']
+                      items: frequencyOptions
                           .map((f) => DropdownMenuItem(value: f, child: Text(f)))
                           .toList(),
                       onChanged: (v) => setStateDialog(() => frequency = v!),
@@ -570,6 +648,22 @@ class _TodoListScreenState extends State<TodoListScreen> {
                       onChanged: (v) => setStateDialog(() => timeSlot = v!),
                     ),
                     const SizedBox(height: 8),
+                    if (frequency == '毎月')
+                      DropdownButtonFormField<int?>(
+                        value: weekOfMonth,
+                        decoration: const InputDecoration(labelText: '第何週'),
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('未指定（日付指定）')),
+                          const DropdownMenuItem(value: 1, child: Text('第1週')),
+                          const DropdownMenuItem(value: 2, child: Text('第2週')),
+                          const DropdownMenuItem(value: 3, child: Text('第3週')),
+                          const DropdownMenuItem(value: 4, child: Text('第4週')),
+                          const DropdownMenuItem(value: 5, child: Text('第5週')),
+                        ],
+                        onChanged: (v) => setStateDialog(() => weekOfMonth = v),
+                      ),
+                    if (frequency == '毎月')
+                      const SizedBox(height: 8),
                     Wrap(
                       spacing: 4,
                       children: List.generate(7, (i) {
@@ -624,23 +718,29 @@ class _TodoListScreenState extends State<TodoListScreen> {
                   onPressed: () {
                     final title = titleCtrl.text.trim();
                     if (title.isNotEmpty) {
+                      // 曜日未選択の場合は全曜日を設定
+                      final weekdays = selectedWeekdays.isEmpty 
+                          ? [0, 1, 2, 3, 4, 5, 6] 
+                          : selectedWeekdays;
                       setState(() {
                         if (isEdit) {
                           _routines[index] = Routine(
                             title: title,
-                            weekdays: selectedWeekdays,
+                            weekdays: weekdays,
                             frequency: frequency,
                             timeSlot: timeSlot,
                             startDate: startDate,
                             memo: _routines[index].memo,
+                            weekOfMonth: frequency == '毎月' ? weekOfMonth : null,
                           );
                         } else {
                           _routines.add(Routine(
                             title: title,
-                            weekdays: selectedWeekdays,
+                            weekdays: weekdays,
                             frequency: frequency,
                             timeSlot: timeSlot,
                             startDate: startDate,
+                            weekOfMonth: frequency == '毎月' ? weekOfMonth : null,
                           ));
                         }
                       });
@@ -706,6 +806,75 @@ class _TodoListScreenState extends State<TodoListScreen> {
       _todos.removeAt(index);
     });
     _saveTodos();
+  }
+
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  bool _routineShouldRunToday(Routine routine, DateTime today) {
+    final start = _dateOnly(routine.startDate);
+    if (today.isBefore(start)) return false;
+    
+    // 曜日チェック（曜日指定がある場合のみ）
+    if (routine.weekdays.isNotEmpty) {
+      final weekdayIndex = today.weekday % 7; // mon=1...sun=7 -> 0-6
+      if (!routine.weekdays.contains(weekdayIndex)) return false;
+    }
+    
+    // 頻度による判定
+    switch (routine.frequency) {
+      case '毎日':
+        return true;
+      case '毎週':
+        return true; // 曜日チェックは上で済んでいる
+      case '毎月':
+        if (routine.weekOfMonth != null) {
+          // 第何週何曜日かで判定
+          return _isNthWeekdayOfMonth(today, routine.weekdays, routine.weekOfMonth!);
+        } else {
+          // 日付で判定
+          return today.day == start.day;
+        }
+      default:
+        return false;
+    }
+  }
+
+  bool _isNthWeekdayOfMonth(DateTime date, List<int> weekdays, int weekNumber) {
+    if (weekdays.isEmpty) return false;
+    final weekdayIndex = date.weekday % 7;
+    if (!weekdays.contains(weekdayIndex)) return false;
+    
+    // その月の1日から今日まで、同じ曜日が何回目か数える
+    int count = 0;
+    for (int day = 1; day <= date.day; day++) {
+      final d = DateTime(date.year, date.month, day);
+      if (d.weekday % 7 == weekdayIndex) {
+        count++;
+      }
+    }
+    return count == weekNumber;
+  }
+
+  bool _isRoutineDoneToday(String title, DateTime today) {
+    final saved = _routineDoneMap[title];
+    if (saved == null) return false;
+    try {
+      final d = DateTime.parse(saved);
+      return d.year == today.year && d.month == today.month && d.day == today.day;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _toggleRoutineDone(String title, bool value, DateTime today) {
+    setState(() {
+      if (value) {
+        _routineDoneMap[title] = today.toIso8601String();
+      } else {
+        _routineDoneMap.remove(title);
+      }
+    });
+    _saveRoutineDone();
   }
 
   Future<void> _showMemoDialog(int index) async {
