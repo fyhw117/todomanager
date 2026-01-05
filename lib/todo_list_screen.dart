@@ -631,7 +631,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue: frequency,
+                      value: frequency,
                       decoration: const InputDecoration(labelText: '頻度'),
                       items: frequencyOptions
                           .map((f) => DropdownMenuItem(value: f, child: Text(f)))
@@ -640,7 +640,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue: timeSlot,
+                      value: timeSlot,
                       decoration: const InputDecoration(labelText: '時間帯'),
                       items: ['指定なし', '朝', '昼', '夜']
                           .map((t) => DropdownMenuItem(value: t, child: Text(t)))
