@@ -90,17 +90,17 @@ class _TodoListScreenState extends State<TodoListScreen> {
       // サンプルデータ（初回のみ）
       setState(() {
         _todos.addAll([
-          Todo(title: 'サンプル１', due: DateTime.now().add(const Duration(days: 1))),
-          Todo(title: 'サンプル２', due: DateTime.now().add(const Duration(days: 2))),
+          Todo(title: 'サンプルタスク１', due: DateTime.now().add(const Duration(days: 1))),
+          Todo(title: 'サンプルタスク２', due: DateTime.now().add(const Duration(days: 2))),
           // 完了済サンプルタスク
           Todo(
-            title: '完了済サンプル１',
+            title: '完了済サンプルタスク１',
             due: DateTime.now().subtract(const Duration(days: 3)),
             done: true,
             completedDate: DateTime.now().subtract(const Duration(days: 1)),
           ),
           Todo(
-            title: '完了済サンプル２',
+            title: '完了済サンプルタスク２',
             due: DateTime.now().subtract(const Duration(days: 5)),
             done: true,
             completedDate: DateTime.now().subtract(const Duration(days: 2)),
@@ -127,10 +127,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Color.fromARGB(255, 255, 239, 211),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(148, 91, 196, 49),
-        title: Text('TODO Manager'),
+        backgroundColor: const Color.fromARGB(255, 218, 171, 85),
+        title: Text('TODO manager'),
       ),
       body: PageView(
         controller: _controller,
@@ -159,10 +159,14 @@ class _TodoListScreenState extends State<TodoListScreen> {
           ),
         ],
       ),
-      // 追加ボタン
+      // 追加ボタン（今日のルーティン[1]と完了済タスク[3]では非活性化）
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color.fromARGB(255, 45, 100, 23),
-        onPressed: _currentIndex == 2 ? _showAddRoutineDialog : _showAddTodoDialog,
+        backgroundColor: (_currentIndex == 1 || _currentIndex == 3)
+            ? Colors.grey
+            : const Color.fromARGB(255, 96, 117, 87),
+        onPressed: (_currentIndex == 1 || _currentIndex == 3) 
+            ? null 
+            : (_currentIndex == 2 ? _showAddRoutineDialog : _showAddTodoDialog),
         child: const Icon(
           Icons.add,
           color: Colors.white,),
@@ -174,7 +178,9 @@ class _TodoListScreenState extends State<TodoListScreen> {
         //   1: 完了済
         //   2: ルーティン
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color.fromARGB(148, 91, 196, 49),
+        backgroundColor: const Color.fromARGB(255, 96, 117, 87),
+        selectedItemColor: Colors.white,        // 選択中の項目の色
+        unselectedItemColor: const Color.fromARGB(255, 143, 143, 143),  //
         onTap: (int index) => _onTapBottomNavigationItem(index),
         // 現在表示されているBottomNavigationBarItemの番号
         //   0: 一覧
@@ -184,11 +190,11 @@ class _TodoListScreenState extends State<TodoListScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
-            label: 'TODO一覧',
+            label: 'タスク',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.today),
-            label: '今日のルーティン',
+            label: "今日のルーティン",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.repeat),
@@ -221,27 +227,28 @@ class _TodoListScreenState extends State<TodoListScreen> {
         scrollDirection: Axis.horizontal,
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: const Color.fromARGB(255, 100, 89, 50)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: DataTable(
-            headingRowColor: WidgetStateProperty.all(Colors.blue.shade50),
+            headingRowColor: WidgetStateProperty.all(const Color.fromARGB(255, 243, 208, 131)),
             headingRowHeight: 48,
             dataRowMinHeight: 56,
             dataRowMaxHeight: 56,
-            columnSpacing: 24,
-            horizontalMargin: 16,
+            columnSpacing: 8,
+            horizontalMargin: 4,
             dividerThickness: 1,
             border: TableBorder(
-              verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
-              horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+              verticalInside: BorderSide(color: Color.fromARGB(255, 100, 89, 50), width: 1),
+              horizontalInside: BorderSide(color: Color.fromARGB(255, 100, 89, 50), width: 1),
             ),
-          columns: const [
-            DataColumn(label: Text('実施', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('完了', style: TextStyle(fontWeight: FontWeight.bold))),
+          columns: [
+            DataColumn(label: SizedBox(width: 30, child: Text('実施', style: TextStyle(fontWeight: FontWeight.bold)))),
+            DataColumn(label: SizedBox(width: 30, child: Text('完了', style: TextStyle(fontWeight: FontWeight.bold)))),
             DataColumn(label: Text('タイトル', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('期限', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('操作', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: SizedBox(width: 40, child: Text('期限', style: TextStyle(fontWeight: FontWeight.bold)))),
+            DataColumn(label: SizedBox(width:40, child: Text('並び', style: TextStyle(fontWeight: FontWeight.bold)))),
+            DataColumn(label: SizedBox(width: 40, child: Text('編集', style: TextStyle(fontWeight: FontWeight.bold)))),
           ],
           rows: List<DataRow>.generate(
             activeTodos.length,
@@ -250,32 +257,77 @@ class _TodoListScreenState extends State<TodoListScreen> {
               final originalIndex = _todos.indexOf(todo);
               return DataRow(
                 cells: [
-                  DataCell(Checkbox(
-                    value: todo.start,
-                    onChanged: (v) => _toggleStart(originalIndex, v ?? false),
-                  )),
-                  DataCell(Checkbox(
-                    value: todo.done,
-                    onChanged: (v) => _toggleDone(originalIndex, v ?? false),
-                  )),
+                  DataCell(
+                    SizedBox(
+                      width: 30,
+                      child: Transform.scale(
+                        scale: 1,
+                        child: Checkbox(
+                          value: todo.start,
+                          onChanged: (v) => _toggleStart(originalIndex, v ?? false),
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 30,
+                      child: Transform.scale(
+                        scale: 1,
+                        child: Checkbox(
+                          value: todo.done,
+                          onChanged: (v) => _toggleDone(originalIndex, v ?? false),
+                        ),
+                      ),
+                    ),
+                  ),
                   DataCell(Text(todo.title)),
-                  DataCell(Text(todo.due != null
-                      ? '${todo.due!.year}/${todo.due!.month}/${todo.due!.day}'
-                      : '-')),
+                  DataCell(
+                    SizedBox(
+                      width: 40,
+                      child: Text(todo.due != null
+                          ? '${todo.due!.month}/${todo.due!.day}'
+                          : '-'),
+                    ),
+                  ),
                   DataCell(
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(
-                            todo.memo.isEmpty ? Icons.note_add : Icons.note,
-                            color: todo.memo.isEmpty ? null : Colors.blue,
-                          ),
-                          onPressed: () => _showMemoDialog(originalIndex),
-                          tooltip: 'メモ',
+                          icon: const Icon(Icons.arrow_upward, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          onPressed: index > 0 ? () => _moveTask(originalIndex, originalIndex - 1) : null,
+                          tooltip: '上へ',
                         ),
+                        SizedBox(width: 4),
                         IconButton(
-                          icon: const Icon(Icons.delete),
+                          icon: const Icon(Icons.arrow_downward, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          onPressed: index < activeTodos.length - 1 ? () => _moveTask(originalIndex, originalIndex + 1) : null,
+                          tooltip: '下へ',
+                        ),
+                      ],
+                    ),
+                  ),
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          onPressed: () => _showEditTodoDialog(originalIndex),
+                          tooltip: '編集',
+                        ),
+                        SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
                           onPressed: () => _deleteTodo(originalIndex),
                           tooltip: '削除',
                         ),
@@ -308,11 +360,11 @@ class _TodoListScreenState extends State<TodoListScreen> {
         scrollDirection: Axis.horizontal,
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: const Color.fromARGB(255, 100, 89, 50)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: DataTable(
-            headingRowColor: WidgetStateProperty.all(Colors.green.shade50),
+            headingRowColor: WidgetStateProperty.all(const Color.fromARGB(255, 243, 208, 131)),
             headingRowHeight: 48,
             dataRowMinHeight: 56,
             dataRowMaxHeight: 56,
@@ -320,14 +372,14 @@ class _TodoListScreenState extends State<TodoListScreen> {
             horizontalMargin: 16,
             dividerThickness: 1,
             border: TableBorder(
-              verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
-              horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+              verticalInside: BorderSide(color: Color.fromARGB(255, 100, 89, 50), width: 1),
+              horizontalInside: BorderSide(color: Color.fromARGB(255, 100, 89, 50), width: 1),
             ),
           columns: const [
             DataColumn(label: Text('タイトル', style: TextStyle(fontWeight: FontWeight.bold))),
             DataColumn(label: Text('期限', style: TextStyle(fontWeight: FontWeight.bold))),
             DataColumn(label: Text('完了日', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('操作', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('戻す', style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: List<DataRow>.generate(
             completedTodos.length,
@@ -344,23 +396,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
                       ? '${todo.completedDate!.year}/${todo.completedDate!.month}/${todo.completedDate!.day}'
                       : '-')),
                   DataCell(
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            todo.memo.isEmpty ? Icons.note_add : Icons.note,
-                            color: todo.memo.isEmpty ? null : Colors.blue,
-                          ),
-                          onPressed: () => _showMemoDialog(originalIndex),
-                          tooltip: 'メモ',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.undo),
-                          onPressed: () => _toggleDone(originalIndex, false),
-                          tooltip: '未完了に戻す',
-                        ),
-                      ],
+                    IconButton(
+                      icon: const Icon(Icons.undo),
+                      onPressed: () => _toggleDone(originalIndex, false),
+                      tooltip: '未完了に戻す',
                     ),
                   ),
                 ],
@@ -386,7 +425,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 executionDate: m['executionDate'] != null ? DateTime.parse(m['executionDate']) : null,
                 weekdays: List<int>.from(m['weekdays'] ?? []),
                 frequency: m['frequency'] ?? '毎日',
-                timeSlot: m['timeSlot'] ?? '指定なし',
+                timeSlot: m['timeSlot'] ?? '時間帯指定なし',
                 startDate: DateTime.parse(m['startDate'] ?? DateTime.now().toIso8601String()),
                 memo: m['memo'] ?? '',
                 weekOfMonth: m['weekOfMonth'],
@@ -434,82 +473,61 @@ class _TodoListScreenState extends State<TodoListScreen> {
   }
 
   Widget _buildRoutineTable() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(Colors.purple.shade50),
-            headingRowHeight: 48,
-            dataRowMinHeight: 56,
-            dataRowMaxHeight: 56,
-            columnSpacing: 24,
-            horizontalMargin: 16,
-            dividerThickness: 1,
-            border: TableBorder(
-              verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
-              horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
+    final weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    
+    return ReorderableListView.builder(
+      itemCount: _routines.length,
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          final routine = _routines.removeAt(oldIndex);
+          _routines.insert(newIndex, routine);
+        });
+        _saveRoutines();
+      },
+      itemBuilder: (context, index) {
+        final routine = _routines[index];
+        final weekdayStr = routine.weekdays.isEmpty
+            ? '-'
+            : routine.weekdays.map((w) => weekdayNames[w]).join(',');
+        
+        return Card(
+          key: ValueKey(routine.title + index.toString()),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          color: const Color.fromARGB(255, 255, 250, 240),
+          child: ListTile(
+            leading: Icon(Icons.drag_handle, color: Colors.grey),
+            title: Text(
+              routine.title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-          columns: const [
-            DataColumn(label: Text('タイトル', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('頻度', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('時間帯', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('曜日', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('開始日', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('操作', style: TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: List<DataRow>.generate(
-            _routines.length,
-            (index) {
-              final routine = _routines[index];
-              final weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
-              final weekdayStr = routine.weekdays.isEmpty
-                  ? '-'
-                  : routine.weekdays.map((w) => weekdayNames[w]).join(',');
-              return DataRow(
-                cells: [
-                  DataCell(Text(routine.title)),
-                  DataCell(Text(routine.frequency)),
-                  DataCell(Text(routine.timeSlot)),
-                  DataCell(Text(weekdayStr)),
-                  DataCell(Text('${routine.startDate.year}/${routine.startDate.month}/${routine.startDate.day}')),
-                  DataCell(
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            routine.memo.isEmpty ? Icons.note_add : Icons.note,
-                            color: routine.memo.isEmpty ? null : Colors.blue,
-                          ),
-                          onPressed: () => _showRoutineMemoDialog(index),
-                          tooltip: 'メモ',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showEditRoutineDialog(index),
-                          tooltip: '編集',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _deleteRoutine(index),
-                          tooltip: '削除',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${routine.frequency} | ${routine.timeSlot}'),
+                Text('$weekdayStr | ${routine.startDate.year}/${routine.startDate.month}/${routine.startDate.day}開始'),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _showEditRoutineDialog(index),
+                  tooltip: '編集',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => _deleteRoutine(index),
+                  tooltip: '削除',
+                ),
+              ],
+            ),
           ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -518,7 +536,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
     final routinesToday = _routines.where((r) => _routineShouldRunToday(r, today)).toList();
 
     if (routinesToday.isEmpty) {
-      return const Center(child: Text('今日実施のルーティンはありません'));
+      return const Center(child: Text('今日のルーティンはありません。'));
     }
 
     return ListView.separated(
@@ -533,15 +551,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
             onChanged: (v) => _toggleRoutineDone(r.title, v ?? false, today),
           ),
           title: Text(r.title),
-          subtitle: Text(r.timeSlot == '指定なし' ? '時間帯: 未設定' : '時間帯: ${r.timeSlot}'),
-          trailing: IconButton(
-            icon: Icon(
-              r.memo.isEmpty ? Icons.note_add : Icons.note,
-              color: r.memo.isEmpty ? null : Colors.blue,
-            ),
-            onPressed: () => _showRoutineMemoDialog(_routines.indexOf(r)),
-            tooltip: 'メモ',
-          ),
+          subtitle: Text(r.timeSlot == '時間帯指定なし' ? '時間帯指定なし' : '${r.timeSlot}'),
         );
       },
     );
@@ -557,43 +567,6 @@ class _TodoListScreenState extends State<TodoListScreen> {
     _saveRoutineDone();
   }
 
-  Future<void> _showRoutineMemoDialog(int index) async {
-    final memoCtrl = TextEditingController(text: _routines[index].memo);
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('メモ編集'),
-          content: TextField(
-            controller: memoCtrl,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              labelText: 'メモ',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('保存'),
-              onPressed: () {
-                setState(() {
-                  _routines[index].memo = memoCtrl.text;
-                });
-                _saveRoutines();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-    memoCtrl.dispose();
-  }
-
   Future<void> _showAddRoutineDialog() async {
     await _showRoutineDialog(null);
   }
@@ -605,11 +578,12 @@ class _TodoListScreenState extends State<TodoListScreen> {
   Future<void> _showRoutineDialog(int? index) async {
     final isEdit = index != null;
     final titleCtrl = TextEditingController(text: isEdit ? _routines[index].title : '');
+    final memoCtrl = TextEditingController(text: isEdit ? _routines[index].memo : '');
     const frequencyOptions = ['毎日', '毎月'];
     String frequency = isEdit && frequencyOptions.contains(_routines[index].frequency)
         ? _routines[index].frequency
         : '毎日';
-    String timeSlot = isEdit ? _routines[index].timeSlot : '指定なし';
+    String timeSlot = isEdit ? _routines[index].timeSlot : '時間帯指定なし';
     List<int> selectedWeekdays = isEdit ? List.from(_routines[index].weekdays) : [];
     DateTime startDate = isEdit ? _routines[index].startDate : DateTime.now();
     int? weekOfMonth = isEdit ? _routines[index].weekOfMonth : null;
@@ -642,7 +616,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                     DropdownButtonFormField<String>(
                       value: timeSlot,
                       decoration: const InputDecoration(labelText: '時間帯'),
-                      items: ['指定なし', '朝', '昼', '夜']
+                      items: ['時間帯指定なし', '朝', '昼', '夜']
                           .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                           .toList(),
                       onChanged: (v) => setStateDialog(() => timeSlot = v!),
@@ -705,6 +679,15 @@ class _TodoListScreenState extends State<TodoListScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: memoCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'メモ',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -730,7 +713,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                             frequency: frequency,
                             timeSlot: timeSlot,
                             startDate: startDate,
-                            memo: _routines[index].memo,
+                            memo: memoCtrl.text,
                             weekOfMonth: frequency == '毎月' ? weekOfMonth : null,
                           );
                         } else {
@@ -740,6 +723,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                             frequency: frequency,
                             timeSlot: timeSlot,
                             startDate: startDate,
+                            memo: memoCtrl.text,
                             weekOfMonth: frequency == '毎月' ? weekOfMonth : null,
                           ));
                         }
@@ -756,6 +740,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
       },
     );
     titleCtrl.dispose();
+    memoCtrl.dispose();
   }
 
   void _toggleStart(int index, bool value) {
@@ -804,6 +789,14 @@ class _TodoListScreenState extends State<TodoListScreen> {
   void _deleteTodo(int index) {
     setState(() {
       _todos.removeAt(index);
+    });
+    _saveTodos();
+  }
+
+  void _moveTask(int fromIndex, int toIndex) {
+    setState(() {
+      final task = _todos.removeAt(fromIndex);
+      _todos.insert(toIndex, task);
     });
     _saveTodos();
   }
@@ -877,87 +870,72 @@ class _TodoListScreenState extends State<TodoListScreen> {
     _saveRoutineDone();
   }
 
-  Future<void> _showMemoDialog(int index) async {
-    final memoCtrl = TextEditingController(text: _todos[index].memo);
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('メモ編集'),
-          content: TextField(
-            controller: memoCtrl,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              labelText: 'メモ',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('保存'),
-              onPressed: () {
-                setState(() {
-                  _todos[index].memo = memoCtrl.text;
-                });
-                _saveTodos();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-    memoCtrl.dispose();
+  Future<void> _showEditTodoDialog(int index) async {
+    await _showTodoDialog(index);
   }
 
   Future<void> _showAddTodoDialog() async {
-    final titleCtrl = TextEditingController();
-    DateTime? pickedDate;
+    await _showTodoDialog(null);
+  }
+
+  Future<void> _showTodoDialog(int? index) async {
+    final isEdit = index != null;
+    final titleCtrl = TextEditingController(text: isEdit ? _todos[index].title : '');
+    final memoCtrl = TextEditingController(text: isEdit ? _todos[index].memo : '');
+    DateTime? pickedDate = isEdit ? _todos[index].due : null;
+    
     await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: const Text('TODOを追加'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleCtrl,
-                    decoration: const InputDecoration(labelText: 'タイトル'),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(pickedDate != null
-                            ? '${pickedDate?.year}/${pickedDate?.month}/${pickedDate?.day}'
-                            : '期限なし'),
+              title: Text(isEdit ? 'TODOを編集' : 'TODOを追加'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleCtrl,
+                      decoration: const InputDecoration(labelText: 'タイトル'),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(pickedDate != null
+                              ? '${pickedDate?.year}/${pickedDate?.month}/${pickedDate?.day}'
+                              : '期限なし'),
+                        ),
+                        TextButton(
+                          child: const Text('日付選択'),
+                          onPressed: () async {
+                            final d = await showDatePicker(
+                              context: context,
+                              initialDate: pickedDate ?? DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (d != null) {
+                              setStateDialog(() {
+                                pickedDate = d;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: memoCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'メモ',
+                        border: OutlineInputBorder(),
                       ),
-                      TextButton(
-                        child: const Text('日付選択'),
-                        onPressed: () async {
-                          final d = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if (d != null) {
-                            setStateDialog(() {
-                              pickedDate = d;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -965,12 +943,18 @@ class _TodoListScreenState extends State<TodoListScreen> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 ElevatedButton(
-                  child: const Text('追加'),
+                  child: Text(isEdit ? '保存' : '追加'),
                   onPressed: () {
                     final title = titleCtrl.text.trim();
                     if (title.isNotEmpty) {
                       setState(() {
-                        _todos.add(Todo(title: title, due: pickedDate));
+                        if (isEdit) {
+                          _todos[index].title = title;
+                          _todos[index].due = pickedDate;
+                          _todos[index].memo = memoCtrl.text;
+                        } else {
+                          _todos.add(Todo(title: title, due: pickedDate, memo: memoCtrl.text));
+                        }
                       });
                       _saveTodos();
                     }
@@ -984,6 +968,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
       },
     );
     titleCtrl.dispose();
+    memoCtrl.dispose();
   }
 
   void _onPageChanged(int index) {
